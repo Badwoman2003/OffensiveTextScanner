@@ -9,7 +9,12 @@ function getAllText() {
   let node;
   let textContent = [];
 
-  while (node = walker.nextNode()) {
+  while ((node = walker.nextNode())) {
+    // 跳过 <script> 标签内的文本
+    if (node.parentNode && node.parentNode.nodeName.toLowerCase() === 'script') {
+      continue;
+    }
+
     const text = node.nodeValue.trim();
     if (text.length > 0) {
       textContent.push(text);
@@ -17,21 +22,6 @@ function getAllText() {
   }
 
   return textContent;
-}
-
-function TransTextData() {
-  const textContent = getAllText();
-  alert(textContent.length)
-  fetch('http://127.0.0.1:8080/App', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ data: textContent })
-  })
-    .then(response => response.json())
-    .then(data => console.log('Success:', data))
-    .catch(error => console.error('Error:', error));
 }
 
 function getAllImageUrls() {
@@ -43,4 +33,29 @@ function getAllImageUrls() {
   return imageUrls;
 }
 
-TransTextData()
+function TransPageData() {
+  window.onload = function () {
+    // 提取页面文本数据
+    const textContent = getAllText();
+    
+    // 提取页面图像数据
+    const ImgContent = getAllImageUrls();
+    
+    // 弹窗显示提取到的文本数量
+    alert(textContent.length);
+
+    // 发送数据到指定服务器
+    fetch("http://127.0.0.1:8080/App", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ TextData: textContent, ImgData: ImgContent }),
+    })
+      .then((response) => response.json())
+      .then((data) => console.log("Success:", data))
+      .catch((error) => console.error("Error:", error));
+  };
+}
+
+TransPageData();
