@@ -5,6 +5,7 @@ import requests
 import shutil
 import os
 
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 page_text = []
 
 app = Flask(__name__)
@@ -29,7 +30,7 @@ def getTextData():
             response.raise_for_status()
 
             img_path = os.path.join(img_folder, f"img_{index+1}.jpg")
-            with open(img_path, "w") as img_file:
+            with open(img_path, "wb") as img_file:
                 img_file.write(response.content)
         except requests.exceptions.RequestException as e:
             print(f"failed to download image {index + 1 }:{e}")
@@ -37,9 +38,7 @@ def getTextData():
     for filename in os.listdir(img_folder):
         file_path = os.path.join(img_folder, filename)
 
-        img_text = OCRmodel.extract(path=filename)
-        if img_text:
-            page_text.append(img_text)
+        img_text = OCRmodel.extract(path=file_path)
 
     print("Received data:", data)
     return jsonify({"status": 0, "message": "success", "data": "success"})

@@ -2,13 +2,13 @@ import torch
 from transformers import BertForSequenceClassification, BertTokenizer
 from paddleocr import PaddleOCR
 
-model_url = './trained_model'
+model_url = "C:/Users/HP/Desktop/Personal_Project/MindsporeComp/OffensiveTextScanner_Project/OffensssiveTextScanner/BertClassifier/Model/trained_model"
 
 class TextScanner:
     def __init__(self) -> None:
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = BertForSequenceClassification.from_pretrained("Model/trained_model")
-        self.tokenizer = BertTokenizer.from_pretrained("Model/trained_model")
+        self.device = torch.device("cpu")
+        self.model = BertForSequenceClassification.from_pretrained(model_url)
+        self.tokenizer = BertTokenizer.from_pretrained(model_url)
         self.model.to(self.device)
         self.model.eval()
 
@@ -19,7 +19,7 @@ class TextScanner:
         return torch.argmax(predictions, dim=1).item()
 
     def acting(self,textlist):
-        result_map = {}
+        result_map:dict = {}
         for text in textlist:
             category = self.predict(text=text)
             result_map[text] = category
