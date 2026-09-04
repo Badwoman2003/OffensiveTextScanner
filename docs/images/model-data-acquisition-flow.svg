@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">OTS 数据获取阶段流程图</title>
+  <desc id="desc">从 COLDataset、Hateful Memes 和网络 Meme 数据源，经接入、统一 Schema、清洗、OCR 与增强，生成 processed parquet。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7faff"/><stop offset="1" stop-color="#eef4ff"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#183153" flood-opacity="0.12"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#466481"/></marker>
+    <style>
+      .title{font:700 34px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff}.subtitle{font:400 17px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#cfe0ff}
+      .lane{font:700 20px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#29445f}.h{font:700 20px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#17324d}.b{font:400 16px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#36536d}.small{font:400 14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#557087}.tag{font:700 14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif}.arrow{stroke:#466481;stroke-width:3;fill:none;marker-end:url(#arrow)}.dash{stroke:#7d91a5;stroke-width:2.5;stroke-dasharray:8 7;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1600" height="980" fill="url(#bg)"/>
+  <rect width="1600" height="112" fill="#17365d"/>
+  <text x="64" y="52" class="title">1. 数据获取阶段</text>
+  <text x="64" y="83" class="subtitle">多源接入 → 统一样本 → 去重清洗与 OCR → 数据增强 → processed/*.parquet</text>
+
+  <text x="64" y="158" class="lane">原始数据源</text>
+  <text x="425" y="158" class="lane">接入 / 归一化</text>
+  <text x="800" y="158" class="lane">清洗与预处理</text>
+  <text x="1250" y="158" class="lane">产出</text>
+  <line x1="64" y1="174" x2="1536" y2="174" stroke="#ccdaea" stroke-width="2"/>
+
+  <!-- sources -->
+  <g filter="url(#shadow)"><rect x="64" y="220" width="270" height="130" rx="18" fill="#fff" stroke="#6d8fc7" stroke-width="2"/></g>
+  <rect x="64" y="220" width="10" height="130" rx="5" fill="#4267a9"/>
+  <text x="98" y="263" class="h">COLDataset</text><text x="98" y="296" class="b">中文 CSV · 文本/标签</text><text x="98" y="323" class="small">modality = text_only</text>
+
+  <g filter="url(#shadow)"><rect x="64" y="402" width="270" height="150" rx="18" fill="#fff" stroke="#8f75bd" stroke-width="2"/></g>
+  <rect x="64" y="402" width="10" height="150" rx="5" fill="#7956a8"/>
+  <text x="98" y="445" class="h">Hateful Memes</text><text x="98" y="478" class="b">JSONL + 图片 · 英文</text><text x="98" y="508" class="small">可选 EN→ZH 批量翻译</text><text x="98" y="532" class="small">OCR 原文保留作对照</text>
+
+  <g filter="url(#shadow)"><rect x="64" y="604" width="270" height="176" rx="18" fill="#fff" stroke="#4da28f" stroke-width="2"/></g>
+  <rect x="64" y="604" width="10" height="176" rx="5" fill="#25816e"/>
+  <text x="98" y="647" class="h">MemeSource 网络源</text><text x="98" y="680" class="b">可扩展爬取接口</text><text x="98" y="711" class="small">RobotsGate 缓存校验</text><text x="98" y="737" class="small">并发下载图片</text><text x="98" y="763" class="small">pHash 初步去重</text>
+
+  <!-- ingest -->
+  <g filter="url(#shadow)"><rect x="425" y="220" width="288" height="130" rx="18" fill="#eef5ff" stroke="#6d8fc7" stroke-width="2"/></g>
+  <text x="453" y="262" class="h">ingest/coldataset.py</text><text x="453" y="296" class="b">CSV → 标准字段</text><text x="453" y="323" class="small">source = coldataset</text>
+
+  <g filter="url(#shadow)"><rect x="425" y="402" width="288" height="150" rx="18" fill="#f5f0fb" stroke="#8f75bd" stroke-width="2"/></g>
+  <text x="453" y="444" class="h">ingest/hateful_memes.py</text><text x="453" y="478" class="b">解析 JSONL / 绑定图片</text><text x="453" y="508" class="small">translator=hf 时批译</text><text x="453" y="532" class="small">写入 text / ocr_text</text>
+
+  <g filter="url(#shadow)"><rect x="425" y="604" width="288" height="176" rx="18" fill="#edf9f6" stroke="#4da28f" stroke-width="2"/></g>
+  <text x="453" y="646" class="h">ingest/memes_scraper.py</text><text x="453" y="680" class="b">合规抓取 / 异步下载</text><text x="453" y="711" class="small">robots.txt → download</text><text x="453" y="737" class="small">图片 pHash → 去重</text><text x="453" y="763" class="small">组装 source / label</text>
+
+  <path d="M334 285 H425" class="arrow"/><path d="M334 477 H425" class="arrow"/><path d="M334 692 H425" class="arrow"/>
+
+  <!-- schema -->
+  <g filter="url(#shadow)"><rect x="800" y="210" width="340" height="174" rx="20" fill="#17365d"/></g>
+  <text x="830" y="251" style="font:700 20px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">统一 Sample Schema</text>
+  <text x="830" y="285" style="font:400 15px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d8e7fa">id · text · ocr_text · image_path</text>
+  <text x="830" y="315" style="font:400 15px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d8e7fa">label · source · modality_mask</text>
+  <rect x="830" y="336" width="267" height="27" rx="13" fill="#335985"/><text x="963" y="355" text-anchor="middle" style="font:700 13px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">屏蔽数据源差异，统一下游接口</text>
+  <path d="M713 285 H800" class="arrow"/><path d="M713 477 H755 V324 H800" class="arrow"/><path d="M713 692 H755 V350 H800" class="arrow"/>
+
+  <!-- clean steps -->
+  <g filter="url(#shadow)"><rect x="800" y="430" width="340" height="190" rx="20" fill="#fff" stroke="#e39b45" stroke-width="2"/></g>
+  <text x="830" y="470" class="h">clean/：去重与清洗</text>
+  <circle cx="842" cy="506" r="11" fill="#efb35d"/><text x="865" y="512" class="b">文本 SimHash：3-gram / Hamming ≤ 3</text>
+  <circle cx="842" cy="542" r="11" fill="#efb35d"/><text x="865" y="548" class="b">图像 pHash：Hamming ≤ 4</text>
+  <circle cx="842" cy="578" r="11" fill="#efb35d"/><text x="865" y="584" class="b">NFKC / URL·@·话题 / 空白规整</text>
+  <path d="M970 384 V430" class="arrow"/>
+
+  <g filter="url(#shadow)"><rect x="800" y="662" width="340" height="180" rx="20" fill="#fff" stroke="#3b9ca6" stroke-width="2"/></g>
+  <text x="830" y="702" class="h">ocr_prefetch：RapidOCR</text>
+  <text x="830" y="737" class="b">图片 → ONNX OCR → ocr_text</text>
+  <text x="830" y="771" class="small">阅读顺序：先按 y 分行，再按 x 排序</text>
+  <text x="830" y="799" class="small">置信度 + 最小字符数双重过滤</text>
+  <rect x="830" y="814" width="224" height="20" rx="10" fill="#e7f7f8"/><text x="942" y="829" text-anchor="middle" class="small">不可用时返回 []，不中断流水线</text>
+  <path d="M970 620 V662" class="arrow"/>
+
+  <!-- outputs -->
+  <g filter="url(#shadow)"><rect x="1245" y="230" width="291" height="154" rx="20" fill="#eaf7ee" stroke="#51a46b" stroke-width="2"/></g>
+  <text x="1276" y="274" class="h">processed/*.parquet</text><text x="1276" y="309" class="b">统一、去重、可训练</text><text x="1276" y="340" class="small">训练/推理 OCR 分布一致</text><text x="1276" y="364" class="small">保留 modality_mask</text>
+
+  <g filter="url(#shadow)"><rect x="1245" y="475" width="291" height="190" rx="20" fill="#fff7e8" stroke="#e39b45" stroke-width="2"/></g>
+  <text x="1276" y="517" class="h">text_render 数据增强</text><text x="1276" y="552" class="b">COLDataset 文本 → 384×384</text><text x="1276" y="583" class="small">随机柔和背景 / 字号</text><text x="1276" y="611" class="small">label 继承 · ocr_text = 原文</text>
+  <rect x="1276" y="626" width="194" height="24" rx="12" fill="#ffe7b8"/><text x="1373" y="643" text-anchor="middle" class="tag" fill="#8a5715">modality = both</text>
+
+  <path d="M1140 752 H1200 V350 H1245" class="arrow"/>
+  <path d="M1140 565 H1245" class="dash"/>
+  <path d="M1390 475 V415 H1198 V328 H1245" class="arrow"/>
+
+  <!-- footer -->
+  <rect x="64" y="894" width="1472" height="54" rx="15" fill="#dfeafb"/>
+  <text x="800" y="928" text-anchor="middle" class="b">结果：MultimodalOffenseDataset 只依赖统一 Schema，并可按 source × modality_mask × label 采样与评估</text>
+</svg>

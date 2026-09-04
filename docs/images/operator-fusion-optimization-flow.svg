@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1180" viewBox="0 0 1800 1180" role="img" aria-labelledby="title desc">
+  <title id="title">OTS 算子融合优化层流程图</title>
+  <desc id="desc">通过融合开关与 Triton 可用性判断，对 ViLT 注入横向与纵向融合算子，并保留 PyTorch 参考实现作为回退。</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7fbff"/><stop offset="1" stop-color="#edf3fa"/></linearGradient>
+    <linearGradient id="head" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#132f50"/><stop offset="1" stop-color="#1d4e72"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#142e46" flood-opacity="0.14"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#49657f"/></marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2e6fa7"/></marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#218477"/></marker>
+    <style>
+      .title{font:700 36px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff}.subtitle{font:400 17px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d4e7f8}
+      .h{font:700 19px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#17324d}.b{font:400 16px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#36536d}.small{font:400 14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#557087}.tag{font:700 14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif}.mono{font:600 14px Consolas,'Microsoft YaHei',sans-serif;fill:#294960}.arrow{stroke:#49657f;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <rect width="1800" height="1180" fill="url(#bg)"/>
+  <rect width="1800" height="116" fill="url(#head)"/>
+  <text x="70" y="53" class="title">3. 算子融合优化层</text>
+  <text x="70" y="86" class="subtitle">运行时能力检测 → patch_vilt 注入 → Horizontal / Vertical Fusing → 数值对齐与自动回退</text>
+
+  <!-- gate -->
+  <g filter="url(#shadow)"><rect x="70" y="151" width="330" height="82" rx="20" fill="#fff" stroke="#9ab1c9" stroke-width="2"/></g>
+  <text x="235" y="184" text-anchor="middle" class="h">加载 ViLT 模型</text><text x="235" y="211" text-anchor="middle" class="mono">model.cuda().eval()</text>
+  <path d="M400 192 H495" class="arrow"/>
+  <polygon points="620,137 745,192 620,247 495,192" fill="#fff5df" stroke="#d59b39" stroke-width="2" filter="url(#shadow)"/>
+  <text x="620" y="181" text-anchor="middle" class="tag" fill="#805616">use_fused_kernels?</text><text x="620" y="206" text-anchor="middle" class="small">CUDA + Triton 可用？</text>
+  <path d="M745 192 H860" class="arrow"/><rect x="774" y="157" width="50" height="24" rx="12" fill="#daf0e8"/><text x="799" y="174" text-anchor="middle" class="tag" fill="#1b705f">是</text>
+  <g filter="url(#shadow)"><rect x="860" y="145" width="440" height="94" rx="20" fill="#173e63"/></g>
+  <text x="1080" y="181" text-anchor="middle" style="font:700 20px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">patcher.patch_vilt(model)</text><text x="1080" y="210" text-anchor="middle" style="font:400 14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d3e5f6">幂等替换模块，并返回 FusionStats / skipped</text>
+  <path d="M620 247 V270 H1435 V239" class="arrow"/><rect x="641" y="246" width="50" height="24" rx="12" fill="#f3dede"/><text x="666" y="263" text-anchor="middle" class="tag" fill="#934646">否</text>
+  <g filter="url(#shadow)"><rect x="1360" y="145" width="370" height="94" rx="20" fill="#fff" stroke="#bdcbd8" stroke-width="2"/></g>
+  <text x="1545" y="181" text-anchor="middle" class="h">PyTorch 参考实现 / 自动跳过</text><text x="1545" y="210" text-anchor="middle" class="small">CPU fallback · baseline · ONNX 路径</text>
+
+  <!-- patch targets -->
+  <text x="70" y="303" class="h">patch_vilt 注入点</text><line x1="70" y1="317" x2="1730" y2="317" stroke="#c8d7e5" stroke-width="2"/>
+  <g filter="url(#shadow)"><rect x="70" y="340" width="510" height="112" rx="18" fill="#eef5ff" stroke="#78a0cc" stroke-width="2"/></g>
+  <text x="99" y="377" class="h">Encoder Attention × 12</text><text x="99" y="406" class="mono">FusedViltSelfAttention.from_hf(...)</text><text x="99" y="433" class="small">自动拼接 Q/K/V 权重，接入 Flash-style Attention</text>
+  <g filter="url(#shadow)"><rect x="645" y="340" width="510" height="112" rx="18" fill="#f4effa" stroke="#9b7ac0" stroke-width="2"/></g>
+  <text x="674" y="377" class="h">Encoder Intermediate × 12</text><text x="674" y="406" class="mono">FusedViltIntermediate</text><text x="674" y="433" class="small">接入 Bias + GELU + Dropout 融合路径</text>
+  <g filter="url(#shadow)"><rect x="1220" y="340" width="510" height="112" rx="18" fill="#eaf8f5" stroke="#69ad9f" stroke-width="2"/></g>
+  <text x="1249" y="377" class="h">Embeddings × 1</text><text x="1249" y="406" class="mono">FusedPatchEmbed</text><text x="1249" y="433" class="small">Conv → token 排列 → LN → CLS → Pos 一体化</text>
+  <path d="M1080 239 V298 H325 V340" class="arrow"/><path d="M1080 298 H900 V340" class="arrow"/><path d="M1080 298 H1475 V340" class="arrow"/>
+
+  <!-- horizontal panel -->
+  <g filter="url(#shadow)"><rect x="70" y="505" width="800" height="470" rx="24" fill="#fff" stroke="#6f99c4" stroke-width="2"/></g>
+  <rect x="70" y="505" width="800" height="70" rx="24" fill="#2d6da4"/><rect x="70" y="551" width="800" height="24" fill="#2d6da4"/>
+  <text x="105" y="548" style="font:700 23px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">Horizontal Fusing · 同输入并行算子合并</text>
+  <text x="105" y="611" class="h">Fused QKV Projection</text>
+  <rect x="105" y="633" width="175" height="55" rx="12" fill="#edf4fc"/><text x="193" y="655" text-anchor="middle" class="small">Linear Q</text><text x="193" y="675" text-anchor="middle" class="mono">X @ Wqᵀ + bq</text>
+  <rect x="105" y="704" width="175" height="55" rx="12" fill="#edf4fc"/><text x="193" y="726" text-anchor="middle" class="small">Linear K</text><text x="193" y="746" text-anchor="middle" class="mono">X @ Wkᵀ + bk</text>
+  <rect x="105" y="775" width="175" height="55" rx="12" fill="#edf4fc"/><text x="193" y="797" text-anchor="middle" class="small">Linear V</text><text x="193" y="817" text-anchor="middle" class="mono">X @ Wvᵀ + bv</text>
+  <text x="306" y="739" style="font:700 28px 'Microsoft YaHei',sans-serif;fill:#66809a">→</text>
+  <rect x="355" y="650" width="463" height="146" rx="18" fill="#deedfb" stroke="#74a6d0" stroke-width="2"/>
+  <text x="586" y="685" text-anchor="middle" class="h">1 个 Triton GEMM</text><text x="586" y="718" text-anchor="middle" class="mono">Wqkv = [Wq; Wk; Wv]</text><text x="586" y="747" text-anchor="middle" class="mono">[Q | K | V] = X @ Wqkvᵀ + bqkv</text><text x="586" y="777" text-anchor="middle" class="small">按输出列 split · BLOCK_K = 32</text>
+  <rect x="105" y="861" width="713" height="78" rx="16" fill="#edf4fc"/>
+  <text x="132" y="891" class="h">Fused Gate / Up（可选）</text><text x="132" y="920" class="small">为 GEGLU / SwiGLU FFN 预留；默认 GELU FFN 不触发</text>
+
+  <!-- vertical panel -->
+  <g filter="url(#shadow)"><rect x="930" y="505" width="800" height="470" rx="24" fill="#fff" stroke="#55a69b" stroke-width="2"/></g>
+  <rect x="930" y="505" width="800" height="70" rx="24" fill="#218477"/><rect x="930" y="551" width="800" height="24" fill="#218477"/>
+  <text x="965" y="548" style="font:700 23px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">Vertical Fusing · 顺序算子串行合并</text>
+  <rect x="965" y="606" width="350" height="86" rx="15" fill="#eaf8f5"/>
+  <text x="988" y="636" class="h">LayerNorm + Linear</text><text x="988" y="664" class="small">边归一化边矩阵乘，省中间张量 HBM 往返</text><text x="988" y="684" class="small">two-pass 方差累加</text>
+  <rect x="1345" y="606" width="350" height="86" rx="15" fill="#eaf8f5"/>
+  <text x="1368" y="636" class="h">Bias + GELU + Dropout</text><text x="1368" y="664" class="small">后三步合为 elementwise kernel</text><text x="1368" y="684" class="small">随机 mask 按 seed / offset 重生成</text>
+  <rect x="965" y="718" width="350" height="156" rx="15" fill="#e3f4f0" stroke="#8cc7be"/>
+  <text x="988" y="749" class="h">Flash-style Attention</text><text x="988" y="779" class="small">QKᵀ + Mask + Softmax + V</text><text x="988" y="807" class="small">tile 分块 + online softmax</text><text x="988" y="835" class="small">不落盘 N×N score 矩阵</text><rect x="988" y="848" width="224" height="20" rx="10" fill="#cfeae4"/><text x="1100" y="863" text-anchor="middle" style="font:700 12px 'Microsoft YaHei',sans-serif;fill:#17665d">ViLT N≈250：显存收益显著</text>
+  <rect x="1345" y="718" width="350" height="156" rx="15" fill="#e3f4f0" stroke="#8cc7be"/>
+  <text x="1368" y="749" class="h">Patch Embedding</text><text x="1368" y="779" class="small">Conv2d(stride=32, k=32)</text><text x="1368" y="807" class="small">→ flatten / transpose → LN</text><text x="1368" y="835" class="small">→ 拼 CLS → 加 position embedding</text><rect x="1368" y="848" width="202" height="20" rx="10" fill="#cfeae4"/><text x="1469" y="863" text-anchor="middle" style="font:700 12px 'Microsoft YaHei',sans-serif;fill:#17665d">五步合一（参考版已落地）</text>
+  <rect x="965" y="899" width="730" height="40" rx="15" fill="#d7eee9"/><text x="1330" y="925" text-anchor="middle" class="tag" fill="#17665d">核心原则：减少 kernel launch、HBM 读写与大中间张量</text>
+
+  <!-- arrows from patch targets -->
+  <path d="M325 452 V480 H470 V505" stroke="#2e6fa7" stroke-width="3" fill="none" marker-end="url(#arrowBlue)"/>
+  <path d="M525 452 V468 H1030 V505" stroke="#218477" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  <path d="M900 452 V480 H1180 V505" stroke="#218477" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+  <path d="M1475 452 V505" stroke="#218477" stroke-width="3" fill="none" marker-end="url(#arrowGreen)"/>
+
+  <!-- verification and benefits -->
+  <g filter="url(#shadow)"><rect x="70" y="1018" width="1660" height="110" rx="22" fill="#193a59"/></g>
+  <text x="105" y="1053" style="font:700 18px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#fff">验证与收益</text>
+  <text x="105" y="1085" style="font:400 14px 'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#d9e7f3">PyTorch 参考实现保证 CPU fallback 与数值对齐；CUDA 测试常规 atol=1e−4 / rtol=1e−3，Flash Attention 放宽至 1e−3 / 1e−2。</text>
+  <rect x="1080" y="1040" width="185" height="54" rx="17" fill="#2c6087"/><text x="1173" y="1073" text-anchor="middle" class="tag" fill="#fff">3 次 launch → 1 次</text>
+  <rect x="1280" y="1040" width="185" height="54" rx="17" fill="#2c6087"/><text x="1373" y="1073" text-anchor="middle" class="tag" fill="#fff">降低峰值显存</text>
+  <rect x="1480" y="1040" width="215" height="54" rx="17" fill="#2c6087"/><text x="1588" y="1073" text-anchor="middle" class="tag" fill="#fff">Profiler / P50 基准验证</text>
+</svg>

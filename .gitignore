@@ -1,0 +1,43 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+.env
+.env.*
+!.env.example
+
+# data / models
+data/raw/
+data/processed/
+data/cache/
+checkpoints/
+runs/
+wandb/
+*.pt
+*.bin
+*.safetensors
+*.onnx
+
+# node
+extension/node_modules/
+extension/dist/
+extension/.vite/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# logs / profiling
+logs/
+*.log
+*.nsys-rep
+*.qdrep
